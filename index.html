@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>GPU Shadow - Transformations</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+    </style>
+</head>
+
+<body>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        document.body.appendChild(renderer.domElement);
+
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(
+            60,
+            window.innerWidth / window.innerHeight,
+            0.1,
+            1000
+        );
+
+        const light = new THREE.DirectionalLight(0xffffff, 1);
+        light.position.set(5, 10, 5);
+        light.castShadow = true;
+        light.shadow.mapSize.width = 1024;
+        light.shadow.mapSize.height = 1024;
+        light.shadow.camera.near = 0.5;
+        light.shadow.camera.far = 50;
+        scene.add(light);
+
+        const ambient = new THREE.AmbientLight(0x404040);
+        scene.add(ambient);
+
+        camera.position.set(0, 1, 5);
+        camera.lookAt(0, 0, 0);
+
+        // Cube
+        const cubeGeometry = new THREE.BoxGeometry(1, 1, 1);
+        const cubeMaterial = new THREE.MeshStandardMaterial({ color: 0xff0000 });
+        const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+        cube.castShadow = true;
+        scene.add(cube);
+
+        // Sphere
+        const sphereGeometry = new THREE.SphereGeometry(0.5, 16, 16);
+        const sphere = new THREE.Mesh(
+            sphereGeometry,
+            new THREE.MeshStandardMaterial({ color: 0x00ff00 })
+        );
+        sphere.position.set(2, 0.5, 0);
+        sphere.castShadow = true;
+        scene.add(sphere);
+
+        // Plane
+        const planeGeometry = new THREE.PlaneGeometry(10, 10);
+        const planeMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff });
+        const plane = new THREE.Mesh(planeGeometry, planeMaterial);
+        plane.rotation.x = -Math.PI / 2;
+        plane.position.y = -0.5;
+        plane.receiveShadow = true;
+        scene.add(plane);
+
+        // Controls
+        const moveSpeed = 0.05;
+        const rotateSpeed = 0.05;
+        const scaleSpeed = 0.02;
+        const sphereSpeed = 0.05;
+        const keys = {};
+
+        window.addEventListener('keydown', (e) => {
+            keys[e.key.toLowerCase()] = true;
+        });
+
+        window.addEventListener('keyup', (e) => {
+            keys[e.key.toLowerCase()] = false;
+        });
+
+        function handleMovement() {
+            // ---- Translation (Move) ----
+            if (keys['w']) cube.position.z -= moveSpeed;
+            if (keys['s']) cube.position.z += moveSpeed;
+            if (keys['a']) cube.position.x -= moveSpeed;
+            if (keys['d']) cube.position.x += moveSpeed;
+
+            // ---- Rotation ----
+            if (keys['q']) cube.rotation.y -= rotateSpeed;
+            if (keys['e']) cube.rotation.y += rotateSpeed;
+
+            // ---- Scaling ----
+            if (keys['z']) cube.scale.addScalar(scaleSpeed); // ขยายทุกแกน
+            if (keys['x']) cube.scale.subScalar(scaleSpeed); // ลดทุกแกน
+            // ป้องกันขนาดติดลบ
+            cube.scale.x = Math.max(cube.scale.x, 0.1);
+            cube.scale.y = Math.max(cube.scale.y, 0.1);
+            cube.scale.z = Math.max(cube.scale.z, 0.1);
+
+            // ---- Sphere Movement ----
+            if (keys['arrowup']) sphere.position.z -= sphereSpeed;
+            if (keys['arrowdown']) sphere.position.z += sphereSpeed;
+            if (keys['arrowleft']) sphere.position.x -= sphereSpeed;
+            if (keys['arrowright']) sphere.position.x += sphereSpeed;
+        }
+
+        // Render loop
+        function animate(t) {
+            handleMovement();
+            renderer.render(scene, camera);
+            requestAnimationFrame(animate);
+        }
+        animate(0);
+
+    </script>
+</body>
+
+</html>
